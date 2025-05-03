@@ -89,6 +89,17 @@
       background-color: #999;
       height: 60%;
     }
+    .summary {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 500px;
+      margin-top: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .summary h3 {
+      margin-top: 0;
+    }
     button {
       background: #E18984;
       border: none;
@@ -110,9 +121,6 @@
     <label for="apps"># of Applications:</label>
     <input type="number" id="apps" placeholder="e.g. 5" />
 
-    <label for="loc">Total Lines of Code (LOC):</label>
-    <input type="number" id="loc" placeholder="e.g. 1000000" />
-
     <label for="vuln"># of Known Vulnerabilities:</label>
     <input type="number" id="vuln" placeholder="e.g. 120" />
 
@@ -121,42 +129,65 @@
 
   <div class="card-container">
     <div class="card">
-      <div>Exploit-Reachable Vulnerabilities</div>
+      <div>Reachable Vulns (Kodem)</div>
       <div class="value" id="vulnerabilities">-</div>
     </div>
     <div class="card">
-      <div>Engineering Hours Reclaimed</div>
+      <div>Hours Saved (Kodem)</div>
       <div class="value" id="hours">-</div>
     </div>
     <div class="card">
-      <div>Compliance Controls Passed/Remaining</div>
+      <div>Compliance Controls Passed</div>
       <div class="value" id="compliance">-</div>
     </div>
   </div>
 
   <div class="benchmark">
     <strong>Exposure Delta Benchmark</strong>
-    <p>Compare the percentage of truly reachable vulnerabilities with and without Kodem:</p>
+    <p>Compare % of vulnerabilities flagged as truly reachable:</p>
     <div class="benchmark-chart">
       <div class="benchmark-bar runtime-bar">15%<br>Kodem Runtime</div>
-      <div class="benchmark-bar traditional-bar">60%<br>Traditional SAST/SCA</div>
+      <div class="benchmark-bar traditional-bar">60%<br>Traditional Tools</div>
     </div>
+  </div>
+
+  <div class="summary" id="summaryBox" style="display:none;">
+    <h3>Summary: Kodem vs Traditional Tools</h3>
+    <p><strong>Without Kodem:</strong> You would spend <span id="wastedHours"></span> hours reviewing <span id="fullVulns"></span> vulnerabilities, costing ~$<span id="wastedCost"></span>.</p>
+    <p><strong>With Kodem:</strong> You focus on <span id="kodemVulns"></span> critical vulns and save <span id="kodemHours"></span> hours, saving ~$<span id="savedCost"></span> in engineering time.</p>
   </div>
 
   <script>
     function calculate() {
       const apps = parseInt(document.getElementById('apps').value) || 0;
-      const loc = parseInt(document.getElementById('loc').value) || 0;
-      const vuln = parseInt(document.getElementById('vuln').value) || 0;
+      const vuln = parseInt(document.getElementById('vuln').value);
+      const hourlyRate = 100; // average hourly rate in USD
 
-      const reachable = Math.round(vuln * 0.3);
-      const hoursSaved = Math.round(reachable * 2);
+      if (vuln === 0 || isNaN(vuln)) {
+        alert("Please enter a valid number of vulnerabilities greater than 0.");
+        return;
+      }
+
+      const reachable = Math.round(vuln * 0.15);
+      const hoursSaved = Math.round((vuln - reachable) * 2);
       const compliancePassed = Math.min(30, apps * 6);
       const complianceRemaining = 32 - compliancePassed;
+
+      const wastedHours = vuln * 2;
+      const wastedCost = wastedHours * hourlyRate;
+      const savedCost = hoursSaved * hourlyRate;
 
       document.getElementById('vulnerabilities').textContent = `${reachable}`;
       document.getElementById('hours').textContent = `${hoursSaved}`;
       document.getElementById('compliance').textContent = `${compliancePassed} / ${complianceRemaining}`;
+
+      document.getElementById('wastedHours').textContent = wastedHours;
+      document.getElementById('fullVulns').textContent = vuln;
+      document.getElementById('kodemVulns').textContent = reachable;
+      document.getElementById('kodemHours').textContent = hoursSaved;
+      document.getElementById('wastedCost').textContent = wastedCost.toLocaleString();
+      document.getElementById('savedCost').textContent = savedCost.toLocaleString();
+      document.getElementById('summaryBox').style.display = 'block';
     }
   </script>
 </body>
